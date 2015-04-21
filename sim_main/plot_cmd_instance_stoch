@@ -1,0 +1,7 @@
+set terminal svg
+set output "instance_stoch.svg"
+set key left top samplen 8 spacing 3 font ",16"
+plot "plot_stoch.out" using 1:2 title 'difference in flow 1' with lines, \
+"plot_stoch.out" using 1:3 title 'difference in flow 2' with lines, \
+
+

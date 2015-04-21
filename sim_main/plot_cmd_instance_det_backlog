@@ -1,0 +1,8 @@
+set terminal svg
+set output "instance_det_backlog.svg"
+set key left top samplen 8 spacing 3 font ",16"
+set xtics font "Times-Roman, 16" 
+set ytics font "Times-Roman, 16" 
+set xrange [0:5000]
+plot "plot_det_backlog.out" using 1:2 title 'difference in flow 1' with lines, \
+"plot_det.out" using 1:2 title 'difference in flow 2' with lines 

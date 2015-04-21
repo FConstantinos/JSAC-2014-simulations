@@ -1,0 +1,5 @@
+set terminal svg
+set output "stability_region.svg"
+set key left bottom samplen 8 spacing 3 font ",16"
+plot "plot_stability.out" using 1:2 title 'Deterministic; p = [.7 .8]' with lines lw 4, \
+"plot_stability.out" using 3:4 title 'Stochastic; p = [.7 .8]' with lines lw 4

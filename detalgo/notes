@@ -1,0 +1,50 @@
+			/* Determine what flow can send the most packets. */
+			mg = MIN(g[SLOW],g[FAST]);
+			Mg = MAX(g[SLOW],g[FAST]);
+			counter=0;
+			if ( MIN(r[SLOW],2*mg + b[SLOW] + b[FAST] + Mg) >= MIN(r[FAST],g[FAST]+b[FAST]) ) {
+
+				/* First evacuate the g+g. */
+				evac( queues[FAST][GOOD],TCPchecklist[FAST],mg);
+				evac( queues[SLOW][GOOD],TCPchecklist[SLOW],mg);
+				counter+=mg;
+
+				/* Then evacuate any slow bad packets. */
+				if (b[SLOW]){
+					while (counter<r[SLOW]){
+						evac(queues[SLOW][BAD],TCPchecklist[SLOW],1);
+						counter++; 
+					}
+				}
+
+				/* Then evacuate any fast bad packets. */
+				if (b[FAST]){
+					while (counter<r[SLOW]){
+						evac(queues[FAST][BAD],TCPchecklist[FAST],1);
+						counter++;
+					}
+				}
+
+				/* Then evacuate any remaining good packets. */
+				if (Mg){
+					flow = (Mg==g[FLOW_1])?FLOW_1:FLOW_2;
+					while (counter<r[flow]){
+						evac(queues[flow][GOOD],TCPchecklist[flow],1);
+						counter++;
+					}
+				}
+			}
+			else {
+				/* First evacuate the fast bad packets. */
+				evac(queues[FAST][BAD],TCPchecklist[FAST],b[FAST]);
+				counter+=b[FAST];
+
+
+				/* Then evacuate the fast good packets. */
+				if(g[FAST]){
+					while (counter < r[FAST]){
+						evac(queues[FAST][GOOD],TCPchecklist[FAST],1);
+						counter++;
+					}
+				}
+			}

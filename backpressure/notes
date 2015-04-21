@@ -1,0 +1,134 @@
+else{
+
+			/* Determine what flow can send the most packets. */
+			mg = MIN(g[SLOW],g[FAST]);
+			Mg = MAX(g[SLOW],g[FAST]);
+
+			counter=0;
+			if ( MIN(r[SLOW],g[SLOW]+g[FAST] + 2*b[SLOW] + u[FAST] + u[SLOW] ) >= MIN(r[FAST],g[FAST]+u[FAST]) ) {
+				while(counter<r[SLOW]){
+					g[0] = g_queue_get_length(queues[0][GOOD]); g[1] = g_queue_get_length(queues[1][GOOD]);
+					b[0] = g_queue_get_length(queues[0][BAD]); b[1] = g_queue_get_length(queues[1][BAD]);
+					u[0] = g_queue_get_length(queues[0][UNKNOWN]); u[1] = g_queue_get_length(queues[1][UNKNOWN]);
+
+					/* Evacuate any bad packets. */
+					if (b[SLOW]){
+						evac( queues[SLOW][BAD],TCPchecklist[SLOW],1);		
+						evac( queues[FAST][BAD],TCPchecklist[FAST],1);
+						counter++;
+						continue;
+					}
+
+					/* Evacuate the g+g. */
+					if (g[FLOW_1] && g[FLOW_2]){
+						evac( queues[FAST][GOOD],TCPchecklist[FAST],1);
+						evac( queues[SLOW][GOOD],TCPchecklist[SLOW],1);
+						counter++;
+						continue;
+					}
+
+					/* g + u controls */
+					if (u[SLOW] && g[FAST]  ) {
+
+						k = SLOW;
+						l = FAST;
+						if(GPOINTER_TO_INT(g_queue_peek_head( queues[k][UNKNOWN])) >0){
+							evac( queues[k][UNKNOWN],TCPchecklist[k],1);
+							evac( queues[l][GOOD],TCPchecklist[l],1);
+						}
+						else{
+							evac( queues[k][UNKNOWN],TCPchecklist[k],1);
+						}
+						counter++;
+						continue;
+					}
+
+					if (u[FAST] && g[SLOW] ){
+						k = FAST;
+						l = SLOW;
+						if(GPOINTER_TO_INT(g_queue_peek_head( queues[k][UNKNOWN])) >0){
+							evac( queues[k][UNKNOWN],TCPchecklist[k],1);
+							evac( queues[l][GOOD],TCPchecklist[l],1);
+						}
+						else{
+							evac( queues[k][UNKNOWN],TCPchecklist[k],1);
+						}
+						counter++;
+						continue;
+					}
+
+
+					/* u + u controls */
+					if (u[FAST] && u[SLOW]){
+						k = GPOINTER_TO_INT(g_queue_peek_head( queues[FAST][UNKNOWN] ));
+						l = GPOINTER_TO_INT(g_queue_peek_head( queues[SLOW][UNKNOWN] ));
+
+						if ( k > 0 && l > 0 ){
+							evac( queues[FAST][UNKNOWN],TCPchecklist[FAST],1);
+							evac( queues[SLOW][UNKNOWN],TCPchecklist[SLOW],1);	
+						}
+						else if ( k > 0 && l < 0 ){
+							evac( queues[SLOW][UNKNOWN],TCPchecklist[SLOW],1);
+							g_queue_push_tail(queues[FAST][GOOD],GINT_TO_POINTER(g_queue_pop_head(queues[FAST][UNKNOWN])) );
+						}
+						else if ( k < 0 && l > 0 ){
+							evac( queues[FAST][UNKNOWN],TCPchecklist[FAST],1);
+							g_queue_push_tail(queues[SLOW][GOOD],GINT_TO_POINTER(g_queue_pop_head(queues[SLOW][UNKNOWN])) );
+						}
+						else if ( k < 0 && l < 0 ){
+							g_queue_push_tail(queues[FAST][BAD],GINT_TO_POINTER(g_queue_pop_head(queues[FAST][UNKNOWN])) );
+							g_queue_push_tail(queues[SLOW][BAD],GINT_TO_POINTER(g_queue_pop_head(queues[SLOW][UNKNOWN])) );					
+						} 
+						counter++;
+						continue;		
+					}
+
+					/* u controls */
+					if (u[FAST]){
+						evac( queues[FAST][UNKNOWN],TCPchecklist[FAST],1);
+						counter++;
+						continue;		
+					}
+					if (u[SLOW]){
+						evac( queues[SLOW][UNKNOWN],TCPchecklist[SLOW],1);
+						counter++;
+						continue;		
+					}
+
+					/* g controls */
+					if (g[SLOW]){
+						evac( queues[SLOW][GOOD],TCPchecklist[SLOW],1);
+						counter++;
+						continue;	
+					}
+					if (g[FAST]){
+						evac( queues[FAST][GOOD],TCPchecklist[FAST],1);		
+						counter++;
+						continue;
+					}
+					break;
+				}
+			}
+			else {
+				while(counter<r[FAST]){
+					g[FAST] = g_queue_get_length(queues[FAST][GOOD]);
+					u[FAST] = g_queue_get_length(queues[FAST][UNKNOWN]);
+	
+					/* First evacuate the fast unknown packets. */
+					if( u[FAST]){
+						evac(queues[FAST][UNKNOWN],TCPchecklist[FAST],1);
+						counter++;
+						continue;
+					}
+
+
+					/* Then evacuate the fast good packets. */
+					if(g[FAST]){
+						evac(queues[FAST][GOOD],TCPchecklist[FAST],1);
+						counter++;
+						continue;
+					}
+					break;
+				}
+			}
+		}
